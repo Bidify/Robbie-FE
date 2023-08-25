@@ -1,0 +1,206 @@
+@import "../../index.scss";
+
+.profile {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  max-width: 260px;
+  width: 100%;
+  background: #fff;
+  padding: 1.5em 1em;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+    background: #f79420;
+  }
+
+  &.active {
+    right: 0;
+    top: 86px;
+    bottom: 64px;
+    height: auto;
+    z-index: 1100;
+    transition: 300ms right ease-in-out;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 992px) {
+    right: -300px;
+  }
+
+  .user_profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1em;
+
+    .icons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      grid-gap: 1.25em;
+
+      img {
+        width: 40px;
+      }
+    }
+  }
+
+  .user_wallet_status {
+    background: #1b1b1b;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 1.25em;
+    color: #fff;
+
+    > div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      grid-gap: 10px;
+      // margin-bottom: 1.5em;
+    }
+
+    p {
+      color: #fff !important;
+      display: flex;
+      align-items: center;
+      grid-gap: 5px;
+
+      img {
+        width: 18px;
+      }
+    }
+    span {
+      color: rgba(255, 255, 255, 0.8) !important;
+      font-size: 13px !important;
+      line-height: 16px !important;
+    }
+
+    .account_info {
+      position: relative;
+      width: fit-content;
+      margin-top: 1.5rem;
+      .copy_text {
+        position: absolute;
+        left: 110%;
+        background: #fff;
+        padding: 5px;
+        font-weight: normal;
+        font-size: 12px;
+        line-height: 16px;
+        letter-spacing: 0.04em;
+        color: #000 !important;
+        border-radius: 5px;
+        visibility: hidden;
+        opacity: 0;
+        transition: 300ms opacity ease-in-out;
+
+        &.active {
+          visibility: visible;
+          opacity: 1;
+          transition: 300ms opacity ease-in-out;
+        }
+      }
+    }
+  }
+
+  .recent_activity {
+    .details {
+      margin-bottom: 1em;
+      display: flex;
+      align-items: center;
+      grid-gap: 10px;
+
+      * {
+        word-break: break-word;
+      }
+
+      img {
+        width: 36px;
+      }
+    }
+  }
+}
+
+.profile_backdrop {
+  position: fixed;
+  top: 86px;
+  bottom: 64px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1090;
+  opacity: 0;
+  visibility: hidden;
+  transition: 300ms opacity ease-in-out;
+
+  &.active {
+    visibility: visible;
+    transition: 300ms opacity ease-in-out;
+    opacity: 1;
+  }
+}
+
+.switchnetwork_modal {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: fit-content;
+  padding: 1em;
+  background: #fff;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  grid-gap: 0.5em;
+  border-radius: 10px;
+  min-width: 210px;
+
+  > div {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    grid-gap: 1em;
+
+    mark {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+    }
+
+    code {
+      color: #1b1b1b;
+      text-transform: capitalize;
+      font-size: 12px;
+      line-height: 16px;
+    }
+  }
+}
+.net-selection {
+  // margin-right: 20px;
+  padding: 6px 6px;
+  border-radius: 4px;
+  padding-right: 18px;
+  border: 1px solid #ababab;
+  cursor: pointer;
+}
+.net-selection i::after {
+  content: ">";
+  font: 17px "Consolas", monospace;
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  transform: rotate(90deg);
+  right: 11px;
+  /*Adjust for position however you want*/
+  
+  top: 30px;
+  padding: 0 0 2px;
+  
+  position: absolute;
+  pointer-events: none;
+  margin-right: 20px;
+}
