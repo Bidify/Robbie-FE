@@ -41,6 +41,19 @@ export const NetworkId = {
   zkSyncMainnet: 324,
   GOERLI: 5
 }
+export const NeworkOrder = [
+  NetworkId.MATIC, 
+  NetworkId.BNB,
+  NetworkId.AVAX,
+  NetworkId.ETC,
+  NetworkId.MOVR,
+  NetworkId.XDAI,
+  NetworkId.EVMOS,
+  NetworkId.EGEM,
+  NetworkId.GOERLI,
+  NetworkId.ARBITRUM,
+  NetworkId.OPTIMISM,
+]
 export const NetworkData = {
   [NetworkId.MATIC]: {
     symbol: "MATIC",
@@ -57,6 +70,14 @@ export const NetworkData = {
     color: "#FCD535",
     logo: logo_bnb,
     loader: bnbLoader
+  },
+  [NetworkId.AVAX]: {
+    symbol: "AVAX",
+    id: "43114",
+    name: "AVALANCHE",
+    color: "#de4437",
+    logo: logo_avax,
+    loader: avaxLoader
   },
   [NetworkId.ETC]: {
     symbol: "ETC",
@@ -81,14 +102,6 @@ export const NetworkData = {
     color: "#dfdfdf",
     logo: logo_egem,
     loader: egemLoader
-  },
-  [NetworkId.AVAX]: {
-    symbol: "AVAX",
-    id: "43114",
-    name: "AVALANCHE",
-    color: "#de4437",
-    logo: logo_avax,
-    loader: avaxLoader
   },
   [NetworkId.MOVR]: {
     symbol: "MOVR",
@@ -157,7 +170,7 @@ export const getSymbol = (chainId) => {
   if(chainId) return NetworkData[chainId].symbol;
   else return "N/A"
 }
-export const supportedChainIds = [ NetworkId.MATIC, NetworkId.BNB, NetworkId.ETC, NetworkId.XDAI, NetworkId.EGEM, NetworkId.AVAX, NetworkId.MOVR, NetworkId.EVMOS, NetworkId.zkSyncTestnet, NetworkId.GOERLI]
+export const supportedChainIds = [ NetworkId.MATIC, NetworkId.BNB, NetworkId.AVAX, NetworkId.ETC, NetworkId.MOVR, NetworkId.XDAI, NetworkId.EVMOS, NetworkId.EGEM, NetworkId.zkSyncTestnet, NetworkId.GOERLI]
 export const getLogUrl = {
   [NetworkId.MATIC]: "https://api.polygonscan.com/api?module=logs&action=getLogs",
   [NetworkId.AVAX]: "https://api.snowtrace.io/api?module=logs&action=getLogs",

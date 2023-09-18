@@ -21,7 +21,7 @@ import refresh from "../assets/icons/youtube.svg";
 
 import { UserContext } from "../store/contexts";
 import { useWeb3React } from "@web3-react/core";
-import { EXPLORER, getSymbol, NetworkData, supportedChainIds, URLS } from "../utils/config";
+import { EXPLORER, getSymbol, NetworkData, supportedChainIds, URLS, NeworkOrder } from "../utils/config";
 import { useEffect } from "react";
 // import { getSymbol } from "../utils/getCurrencySymbol";
 import { injected } from "../utils/connector";
@@ -48,6 +48,7 @@ const Profile = () => {
   const [networkName, setNetworkName] = useState();
 
   useEffect(() => {
+    console.log(chainId)
     const getData = async () => {
       if (account) {
         const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
@@ -72,6 +73,9 @@ const Profile = () => {
         method: "wallet_switchEthereumChain",
         params: [{ chainId: Web3.utils.toHex(_chainId) }],
       });
+      if (_chainId === 61) {
+        window.location.reload();
+      }
       setToggleSwitchNetwork(false);
     } catch (error) {
       // This error code indicates that the chain has not been added to MetaMask.
@@ -137,11 +141,11 @@ const Profile = () => {
 
   const renderSwitchNetwork = (
     <div className="switchnetwork_modal">
-      {Object.values(NetworkData).sort((a, b) => Number(b.id) - Number(a.id)).map((val, index) => {
+      {NeworkOrder.map((val, index) => {
         return (
-          <div key={index} onClick={() => handleSwitchNetwork(val.id)}>
-            <mark style={{ background: val.color }}></mark>
-            <code>{val.name}&nbsp;{!supportedChainIds.includes(Number(val.id)) && "(Coming soon)"}</code>
+          <div key={index} onClick={() => handleSwitchNetwork(NetworkData[val].id)}>
+            <mark style={{ background: NetworkData[val].color }}></mark>
+            <code>{NetworkData[val].name}&nbsp;{!supportedChainIds.includes(Number(NetworkData[val].id)) && "(Coming soon)"}</code>
           </div>
         );
       })}

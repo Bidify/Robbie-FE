@@ -6,7 +6,13 @@
   grid-column-gap: 1em;
   grid-row-gap: 1.25em;
   margin-bottom: 2em;
-
+  @media (min-width: 992px) {
+    display: flex;
+    flex-wrap: wrap;
+    .card {
+      width: 32%;
+    }
+  }
   @media (max-width: 992px) {
     grid-template-columns: repeat(3, 1fr);
   }

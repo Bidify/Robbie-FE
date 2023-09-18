@@ -379,7 +379,7 @@ export async function getNFTs(chainId, account) {
   }).catch(e => {
     console.log("error on getpastlogs", e.message)
   });
-  console.log("logs", logs)
+  // console.log("logs", logs)
   // Filter to just tokens which are still in our custody
   const res = [];
   const ids = {};
@@ -456,6 +456,7 @@ export async function getNFTs(chainId, account) {
       continue;
     }
   }
+  console.log("res", res)
   return res;
 }
 

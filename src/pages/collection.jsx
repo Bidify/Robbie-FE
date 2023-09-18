@@ -35,6 +35,7 @@ const Collection = () => {
   // const [update, setUpdate] = useState([])
 
   const [nfts, setNfts] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [cursor, setCursor] = useState(null);
   const [chainChanged, setChainChanged] = useState(false);
@@ -44,39 +45,32 @@ const Collection = () => {
   }
   //HANDLING METHODS
   const getCollection = async () => {
+    setLoading(true)
     userDispatch({
       type: "MY_COLLECTIONS",
       payload: { results: undefined },
     });
-    if (chainId === 137 || chainId === 43114 || chainId === 42161 || chainId === 56) {
-      const resp = await getNftsByMoralis(account, cursor, chainId);
-      setCursor(resp.cursor)
-      let tmpNfts = [...nfts];
+    const response = await axios.get(`${baseUrl}/collection`, { params: { chainId, owner: account } })
+    const results = response.data
+    if (results.length === 0) {
+      const newData = await getDetails(chainId, account)
+      console.log(newData);
+      setNfts([ ...newData ]);
       
-      for (let i = 0; i < resp.nfts.length; i++) {
-        const retdata = resp.nfts[i];
-        tmpNfts.push(retdata);
-      }
-      setNfts([ ...tmpNfts ]);
-    } else {
-      const response = await axios.get(`${baseUrl}/collection`, { params: { chainId, owner: account } })
-      const results = response.data
-      if (results.length === 0) {
-        const newData = await getDetails(chainId, account)
-        setNfts([ ...newData ]);
-        
-        await handleUpdate(newData)
-      }
-      else {
-        setNfts([ ...results ]);
-        
-        // setTimeout(async() => {
-        await updateDatabase(results)
-        // }, 3000)
-
-      }
+      await handleUpdate(newData)
+      setLoading(false)
     }
+    else {
+      setNfts([ ...results ]);
+      setLoading(false)
+      // setTimeout(async() => {
+      await updateDatabase(results)
+      // }, 3000)
+
+    }
+    // }
     setChainChanged(false);
+    
   }
 
   const loadNftsFromMoralis = async () => {
@@ -104,16 +98,20 @@ const Collection = () => {
   }, [refresh])
 
   const updateDatabase = async (results) => {
-    // console.log("before updateing", results, results.length)
+    console.log("before updateing", results.length)
     console.log("updating database")
     const newData = await getDetails(chainId, account)
-    console.log("updated database")
     // console.log("comparing", newData, newData.length)
     // if(newData.length === )
     // const dataToAdd = newData.filter(nft => results.includes(nft))
     // const dataToRemove = results.filter(nft => newData.includes(nft))
     // console.log(dataToAdd, dataToRemove)
     await axios.put(`${baseUrl}/admincollection`, { data: newData, chainId, owner: account })
+    console.log("updated database")
+    if (newData.length !== results.length) {
+      setNfts([]);
+      setChainChanged(true);
+    } 
     // if(dataToAdd.length) await axios.post(`${baseUrl}/admincollection`, dataToAdd)
     // if(dataToRemove.length) await axios.delete(`${baseUrl}/admincollection`, dataToRemove)
   }
@@ -158,7 +156,7 @@ const Collection = () => {
         title="My NFTs"
         description="view and list your NFTs for auction"
       />
-      {!active ? <NoArtifacts title="Bidify is not connected to Ethereum." /> : nfts ? (
+      {!active ? <NoArtifacts title="Bidify is not connected to Ethereum." /> : !loading ? (
         nfts?.length > 0 ? (
           <>
             {renderCards}
