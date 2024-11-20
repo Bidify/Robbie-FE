@@ -13,8 +13,18 @@ import Web3 from "web3";
 import { Contract, ethers } from "ethers";
 import { FetchWrapper } from "use-nft";
 import detectEthereumProvider from "@metamask/detect-provider";
-import { BIDIFY, BIT, ERC721, ERC1155, URLS, getLogUrl, snowApi, baseUrl } from "./config";
-import axios from 'axios';
+import {
+  BIDIFY,
+  BIT,
+  ERC721,
+  ERC1155,
+  URLS,
+  getLogUrl,
+  snowApi,
+  baseUrl,
+  NetworkId,
+} from "./config";
+import axios from "axios";
 import { string } from "yup/lib/locale";
 import { get } from "lodash-es";
 //import { settings } from '@/utils/settings'
@@ -355,31 +365,56 @@ export async function getNFTs(chainId, account) {
   // const from = account;
   const from = account;
   const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
-  const topic = "0x" + from.split("0x")[1].padStart(64, "0")
-  let logs = []
-  let logs_1155 = []
-  if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 5 || chainId === 9001 || chainId === 1285 || chainId === 100) {
-    console.log(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 || chainId === 1987 ? 'toBlock=latest&' : ''}topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef&topic0_2_opr=and&topic2=${chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic}&apikey=${snowApi[chainId]}`)
-    const ret = await axios.get(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 || chainId === 1987 ? 'toBlock=latest&' : ''}topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef&topic0_2_opr=and&topic2=${chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic}&apikey=${snowApi[chainId]}`).catch(e => console.log("getNft error"))
+  const topic = "0x" + from.split("0x")[1].padStart(64, "0");
+  let logs = [];
+  let logs_1155 = [];
+  if (
+    chainId === 43114 ||
+    chainId === 137 ||
+    chainId === 56 ||
+    chainId === 5 ||
+    chainId === 9001 ||
+    chainId === 1285 ||
+    chainId === 100 ||
+    chainId === NetworkId.INK
+  ) {
+    // console.log(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 || chainId === 1987 || chainId === NetworkId.INK ? 'toBlock=latest&' : ''}topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef&topic0_2_opr=and&topic2=${chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic}&apikey=${snowApi[chainId]}`)
+    const ret = await axios
+      .get(
+        `${getLogUrl[chainId]}&fromBlock=0&${
+          chainId === 9001 ||
+          chainId === 100 ||
+          chainId === 61 ||
+          chainId === 1987 ||
+          chainId === NetworkId.INK
+            ? "toBlock=latest&"
+            : ""
+        }topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef&topic0_2_opr=and&topic2=${
+          chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic
+        }&apikey=${snowApi[chainId]}`
+      )
+      .catch((e) => console.log("getNft error"));
     // return console.log("return value", ret)
-    logs = ret.data.result
+    logs = ret.data.result;
   }
 
   // Get all transfers to us
-  else logs = await web3.eth.getPastLogs({
-    fromBlock: 0,
-    toBlock: "latest",
-    topics: [
-      "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-      // "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62",
-      // null,
-      null,
-      "0x" + from.split("0x")[1].padStart(64, "0"),
-    ],
-  }).catch(e => {
-    console.log("error on getpastlogs", e.message)
-  });
-  // console.log("logs", logs)
+  else
+    logs = await web3.eth
+      .getPastLogs({
+        fromBlock: 0,
+        toBlock: "latest",
+        topics: [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          // "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62",
+          // null,
+          null,
+          "0x" + from.split("0x")[1].padStart(64, "0"),
+        ],
+      })
+      .catch((e) => {
+        console.log("error on getpastlogs", e.message);
+      });
   // Filter to just tokens which are still in our custody
   const res = [];
   const ids = {};
@@ -405,33 +440,56 @@ export async function getNFTs(chainId, account) {
         ids[jointID] = true;
         res.push({ platform, token, amount: 1 });
       } catch (e) {
-        console.log(e)
+        console.log(e);
         continue;
       }
     } else {
       continue;
     }
   }
-  if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 5 || chainId === 9001 || chainId === 1285 || chainId === 100) {
-    const ret = await axios.get(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 ? 'toBlock=latest&' : ''}topic0=0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62&topic0_3_opr=and&topic3=${chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic}&apikey=${snowApi[chainId]}`)
-    logs_1155 = ret.data.result
-  }
-  else logs_1155 = await web3.eth.getPastLogs({
-    fromBlock: 0,
-    toBlock: "latest",
-    topics: [
-      // "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-      "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62",
-      null,
-      null,
-      "0x" + from.split("0x")[1].padStart(64, "0"),
-    ],
-  });
+  if (
+    chainId === 43114 ||
+    chainId === 137 ||
+    chainId === 56 ||
+    chainId === 5 ||
+    chainId === 9001 ||
+    chainId === 1285 ||
+    chainId === 100 ||
+    chainId === NetworkId.INK
+  ) {
+    const ret = await axios.get(
+      `${getLogUrl[chainId]}&fromBlock=0&${
+        chainId === 9001 ||
+        chainId === 100 ||
+        chainId === 61 ||
+        chainId === NetworkId.INK
+          ? "toBlock=latest&"
+          : ""
+      }topic0=0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62&topic0_3_opr=and&topic3=${
+        chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic
+      }&apikey=${snowApi[chainId]}`
+    );
+    logs_1155 = ret.data.result;
+  } else
+    logs_1155 = await web3.eth.getPastLogs({
+      fromBlock: 0,
+      toBlock: "latest",
+      topics: [
+        // "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62",
+        null,
+        null,
+        "0x" + from.split("0x")[1].padStart(64, "0"),
+      ],
+    });
   for (let log of logs_1155) {
     if (log.topics[3] !== undefined) {
       try {
         let platform = log.address;
-        const decodeData = web3.eth.abi.decodeParameters(['uint256', 'uint256'], log.data);
+        const decodeData = web3.eth.abi.decodeParameters(
+          ["uint256", "uint256"],
+          log.data
+        );
         let token = web3.utils.toHex(decodeData[0]);
         let amount = await new web3.eth.Contract(ERC1155.abi, platform).methods
           .balanceOf(from, decodeData[0])
@@ -456,7 +514,6 @@ export async function getNFTs(chainId, account) {
       continue;
     }
   }
-  console.log("res", res)
   return res;
 }
 
@@ -479,32 +536,39 @@ export async function signList({
   isERC721,
   chainId,
   account,
-  library
+  library,
 }) {
-  const erc721 = new ethers.Contract(platform, ERC721.abi, library.getSigner())
-  const erc1155 = new ethers.Contract(platform, ERC1155.abi, library.getSigner())
+  const erc721 = new ethers.Contract(platform, ERC721.abi, library.getSigner());
+  const erc1155 = new ethers.Contract(
+    platform,
+    ERC1155.abi,
+    library.getSigner()
+  );
   let tx;
   const gasLimit = 1000000;
-  
+
   if (!isERC721) {
-    const isApproved = await erc1155.isApprovedForAll(account, BIDIFY.address[chainId])
+    const isApproved = await erc1155.isApprovedForAll(
+      account,
+      BIDIFY.address[chainId]
+    );
     if (!isApproved) {
-      tx = chainId === 137 ?
-      await erc1155
-        .setApprovalForAll(BIDIFY.address[chainId], true, { gasLimit }) :
-      await erc1155
-        .setApprovalForAll(BIDIFY.address[chainId], true)
+      tx =
+        chainId === 137
+          ? await erc1155.setApprovalForAll(BIDIFY.address[chainId], true, {
+              gasLimit,
+            })
+          : await erc1155.setApprovalForAll(BIDIFY.address[chainId], true);
     }
   }
   if (isERC721) {
-    tx = chainId === 137 ?
-      await erc721
-        .approve(BIDIFY.address[chainId], token, {gasLimit}) :
-      await erc721
-        .approve(BIDIFY.address[chainId], token)
+    tx =
+      chainId === 137
+        ? await erc721.approve(BIDIFY.address[chainId], token, { gasLimit })
+        : await erc721.approve(BIDIFY.address[chainId], token);
   }
   if (tx) {
-    await tx.wait()
+    await tx.wait();
   }
 }
 
@@ -536,7 +600,7 @@ export async function list({
   account,
   library,
   isERC721,
-  setTransaction
+  setTransaction,
 }) {
   let decimals = await getDecimals(currency);
   if (!currency) {
@@ -551,44 +615,70 @@ export async function list({
   const tokenNum = token;
   const gasLimit = 1000000;
   try {
-    const totalCount = await getLogs(chainId)
-    const tx = chainId === 137 ? await Bidify
-      .list(
-        currency,
-        platform,
-        tokenNum.toString(),
-        atomic(price.toString(), decimals).toString(),
-        atomic(endingPrice.toString(), decimals).toString(),
-        Number(days),
-        isERC721,
-        "0x0000000000000000000000000000000000000000",
-        { gasLimit }
-      ) :
-      await Bidify
-        .list(
-          currency,
-          platform,
-          tokenNum.toString(),
-          atomic(price.toString(), decimals).toString(),
-          atomic(endingPrice.toString(), decimals).toString(),
-          Number(days),
-          isERC721,
-          "0x0000000000000000000000000000000000000000"
-        )
-    const ret = await tx.wait()
-    setTransaction(ret)
-    if (chainId === 43114 || chainId === 137 || chainId === 5 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100 || chainId === 61)
-      while (await getLogs(chainId) === totalCount) {
-        console.log()
-        console.log("while loop")
+    const totalCount = await getLogs(chainId);
+    const tx =
+      chainId === 137
+        ? await Bidify.list(
+            currency,
+            platform,
+            tokenNum.toString(),
+            atomic(price.toString(), decimals).toString(),
+            atomic(endingPrice.toString(), decimals).toString(),
+            Number(days),
+            isERC721,
+            "0x0000000000000000000000000000000000000000",
+            { gasLimit }
+          )
+        : await Bidify.list(
+            currency,
+            platform,
+            tokenNum.toString(),
+            atomic(price.toString(), decimals).toString(),
+            atomic(endingPrice.toString(), decimals).toString(),
+            Number(days),
+            isERC721,
+            "0x0000000000000000000000000000000000000000"
+          );
+    const ret = await tx.wait();
+    console.log("transaction successed", ret);
+    setTransaction(ret);
+    if (
+      chainId === 43114 ||
+      chainId === 137 ||
+      chainId === 5 ||
+      chainId === 56 ||
+      chainId === 9001 ||
+      chainId === 1285 ||
+      chainId === 100 ||
+      chainId === 61 ||
+      chainId === NetworkId.INK
+    )
+      while ((await getLogs(chainId)) === totalCount) {
+        console.log("while loop");
       }
     // const listCnt = await getLogs()
-    const newId = totalCount
+    const newId = totalCount;
     // await delay()
-    const listingDetail = await getDetailFromId(newId, chainId, account, image, metadataUrl, name, token, platform, isERC721, library)
-    await axios.post(`${baseUrl}/auctions`, { ...listingDetail, image_cache: image })
+    console.log("getting list detail", newId);
+    const listingDetail = await getDetailFromId(
+      newId,
+      chainId,
+      account,
+      image,
+      metadataUrl,
+      name,
+      token,
+      platform,
+      isERC721,
+      library
+    );
+    console.log("listingDetail", listingDetail);
+    await axios.post(`${baseUrl}/auctions`, {
+      ...listingDetail,
+      image_cache: image,
+    });
   } catch (error) {
-    return console.log("list error", error)
+    return console.log("list error", error);
   }
 }
 
@@ -684,37 +774,45 @@ export const signBid = async (id, amount, chainId, account, library) => {
   // return;
   const from = account;
   const chain_id = chainId;
-  
-  let currency
-  if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100) currency = (await getListingDetail(id, chainId, library)).currency;
-  else currency = (await getListing(id.toString())).currency
-  
+
+  let currency;
+  if (
+    chainId === 43114 ||
+    chainId === 137 ||
+    chainId === 56 ||
+    chainId === 9001 ||
+    chainId === 1285 ||
+    chainId === 100 ||
+    chainId === NetworkId.INK
+  )
+    currency = (await getListingDetail(id, chainId, library)).currency;
+  else currency = (await getListing(id.toString())).currency;
+
   let balance;
-  const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]))
+  const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
   if (!currency) {
-    balance = await web3.eth.getBalance(from)
-    balance = web3.utils.fromWei(balance)
-  }
-  else {
+    balance = await web3.eth.getBalance(from);
+    balance = web3.utils.fromWei(balance);
+  } else {
     const erc20 = new ethers.Contract(currency, BIT.abi, library.getSigner());
     const decimals = await getDecimals(currency);
-    balance = unatomic(
-      await erc20.balanceOf(from),
-      decimals
-    );
-    let allowance = await erc20.allowance(from, BIDIFY.address[chain_id])
-    // console.log("allowence", Number(allowance));
+    balance = unatomic(await erc20.balanceOf(from), decimals);
+    let allowance = await erc20.allowance(from, BIDIFY.address[chain_id]);
     if (Number(amount) >= Number(allowance)) {
       if (chainId === 137) {
-        const gasLimit = 1000000
-        const tx = await erc20
-          .approve(BIDIFY.address[chainId], atomic(balance, decimals), {gasLimit})
-          await tx.wait()
+        const gasLimit = 1000000;
+        const tx = await erc20.approve(
+          BIDIFY.address[chainId],
+          atomic(balance, decimals),
+          { gasLimit }
+        );
+        await tx.wait();
       } else {
-        
-        const tx = await erc20
-          .approve(BIDIFY.address[chainId], atomic(balance, decimals))
-        await tx.wait()
+        const tx = await erc20.approve(
+          BIDIFY.address[chainId],
+          atomic(balance, decimals)
+        );
+        await tx.wait();
       }
     }
   }
@@ -722,7 +820,7 @@ export const signBid = async (id, amount, chainId, account, library) => {
   if (Number(balance) < Number(amount)) {
     throw new Error("low_balance");
   }
-}
+};
 
 /**
  * Bids on a listing via Bidify
@@ -732,40 +830,79 @@ export const signBid = async (id, amount, chainId, account, library) => {
  * @memberof Bidify
  */
 
-export const bid = async (id, amount, chainId, account, library, setTransaction) => {
-  let currency
-  if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100) currency = (await getListingDetail(id, chainId, library)).currency;
-  else currency = (await getListing(id.toString())).currency
-  let decimals = await getDecimals(currency)
-  const Bidify = new ethers.Contract(BIDIFY.address[chainId], BIDIFY.abi, library.getSigner())
-  const from = account
+export const bid = async (
+  id,
+  amount,
+  chainId,
+  account,
+  library,
+  setTransaction
+) => {
+  let currency;
+  if (
+    chainId === 43114 ||
+    chainId === 137 ||
+    chainId === 56 ||
+    chainId === 9001 ||
+    chainId === 1285 ||
+    chainId === 100 ||
+    chainId === NetworkId.INK
+  )
+    currency = (await getListingDetail(id, chainId, library)).currency;
+  else currency = (await getListing(id.toString())).currency;
+  let decimals = await getDecimals(currency);
+  const Bidify = new ethers.Contract(
+    BIDIFY.address[chainId],
+    BIDIFY.abi,
+    library.getSigner()
+  );
+  const from = account;
   // return console.log("handle bid", id, atomic(amount, decimals).toString())
   // console.log("amount", atomic(amount, decimals).toString())
-  const gasLimit = 1000000
+  const gasLimit = 1000000;
   if (currency) {
-    const tx = chainId === 137 ? await Bidify
-      .bid(id, "0x0000000000000000000000000000000000000000", atomic(amount, decimals).toString(), { gasLimit }) :
-      await Bidify
-        .bid(id, "0x0000000000000000000000000000000000000000", atomic(amount, decimals).toString())
-    const ret = await tx.wait()
-    setTransaction(ret)
+    const tx =
+      chainId === 137
+        ? await Bidify.bid(
+            id,
+            "0x0000000000000000000000000000000000000000",
+            atomic(amount, decimals).toString(),
+            { gasLimit }
+          )
+        : await Bidify.bid(
+            id,
+            "0x0000000000000000000000000000000000000000",
+            atomic(amount, decimals).toString()
+          );
+    const ret = await tx.wait();
+    setTransaction(ret);
   } else {
     // const nextamount = await Bidify.getNextBid(id)
     // console.log("amount and next Bid", atomic(amount, decimals).toString(), nextamount.toString())
-    const tx = chainId === 137 ? await Bidify
-      .bid(id, "0x0000000000000000000000000000000000000000", atomic(amount, decimals).toString(), {
-        from: from,
-        value: atomic(amount, decimals).toString(),
-      }) :
-      await Bidify
-        .bid(id, "0x0000000000000000000000000000000000000000", atomic(amount, decimals).toString(), {
-          from: from,
-          value: atomic(amount, decimals).toString(),
-        })
-    const ret = await tx.wait()
-    setTransaction(ret)
+    const tx =
+      chainId === 137
+        ? await Bidify.bid(
+            id,
+            "0x0000000000000000000000000000000000000000",
+            atomic(amount, decimals).toString(),
+            {
+              from: from,
+              value: atomic(amount, decimals).toString(),
+            }
+          )
+        : await Bidify.bid(
+            id,
+            "0x0000000000000000000000000000000000000000",
+            atomic(amount, decimals).toString(),
+            {
+              from: from,
+              value: atomic(amount, decimals).toString(),
+            }
+          );
+    const ret = await tx.wait();
+    setTransaction(ret);
   }
-}
+};
 
 /**
  * Gets all all recent listings from Bidify
@@ -819,7 +956,6 @@ export async function finish(id) {
     .send({ from: window?.ethereum?.selectedAddress });
 }
 
-
 /**
  * Gets eth balance of current connected account
  * @name getETHBalance
@@ -857,7 +993,6 @@ export async function mintNFT(token) {
 
   return { token, address: settings.nftAddress };
 }
-
 
 const TestNFTJSON = [
   {
@@ -1103,22 +1238,25 @@ const TestNFTJSON = [
   },
 ];
 
-export const isValidUrl = urlString=> {
-  var urlPattern = new RegExp('^(https?:\\/\\/)?'+ // validate protocol
-  '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // validate domain name
-  '((\\d{1,3}\\.){3}\\d{1,3}))'+ // validate OR ip (v4) address
-  '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // validate port and path
-  '(\\?[;&a-z\\d%_.~+=-]*)?'+ // validate query string
-  '(\\#[-a-z\\d_]*)?$','i'); // validate fragment locator
-return !!urlPattern.test(urlString);
-}
+export const isValidUrl = (urlString) => {
+  var urlPattern = new RegExp(
+    "^(https?:\\/\\/)?" + // validate protocol
+      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // validate domain name
+      "((\\d{1,3}\\.){3}\\d{1,3}))" + // validate OR ip (v4) address
+      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // validate port and path
+      "(\\?[;&a-z\\d%_.~+=-]*)?" + // validate query string
+      "(\\#[-a-z\\d_]*)?$",
+    "i"
+  ); // validate fragment locator
+  return !!urlPattern.test(urlString);
+};
 
 export const getBalance = async (account, chainId) => {
   const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
   let _balance = await web3.eth.getBalance(account); //Will give value in.
   _balance = web3.utils.fromWei(_balance);
   return _balance;
-}
+};
 
 export const getFetchValues = async (val, chainId, account) => {
   let provider;
@@ -1137,14 +1275,13 @@ export const getFetchValues = async (val, chainId, account) => {
       break;
     default:
       if (!URLS[chainId]) console.log("select valid chain");
-      else provider = new ethers.providers.JsonRpcProvider(URLS[chainId])
+      else provider = new ethers.providers.JsonRpcProvider(URLS[chainId]);
   }
 
   const ethersConfig = {
     ethers: { Contract },
     provider: provider,
   };
-
 
   const fetcher = ["ethers", ethersConfig];
 
@@ -1155,8 +1292,11 @@ export const getFetchValues = async (val, chainId, account) => {
   function imageurl(url) {
     // const string = url;
     const check = url.substr(16, 4);
-    if(url.includes('ipfs://')) return url.replace('ipfs://', 'https://ipfs.io/ipfs/')
-    if(url.includes('https://ipfs.io/ipfs/')) return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    if (url.includes("ipfs://"))
+      return url.replace("ipfs://", "https://ipfs.io/ipfs/");
+    if (url.includes("https://ipfs.io/ipfs/"))
+      return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    if (url.includes("https://arweave.net")) return url;
     if (check === "ipfs") {
       const manipulated = url.substr(16, 16 + 45);
       return "https://dweb.link/" + manipulated;
@@ -1165,28 +1305,30 @@ export const getFetchValues = async (val, chainId, account) => {
     }
   }
 
-  // function jsonurl(url) {
-  //   return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-  // }
-
-  const fetchWrapper = new FetchWrapper(fetcher
-    , {
-      jsonProxy: (url) => {
-        return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      },
-      imageProxy: (url) => {
-        if (chainId === 137 || chainId === 43114 || chainId === 42161 || chainId === 56) {
-          return url;
-        } else {
-          return imageurl(url);
-        }
-      },
-      ipfsUrl: (cid, path) => {
-        return ipfsUrl(cid, path);
-      },
-    }
-  );
-  let result = {}; 
+  const fetchWrapper = new FetchWrapper(fetcher, {
+    jsonProxy: (url) => {
+      // if (url.includes("https://arweave.net")) return url;
+      // return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      return url;
+    },
+    imageProxy: (url) => {
+      if (
+        chainId === 137 ||
+        chainId === 43114 ||
+        chainId === 42161 ||
+        chainId === 56 ||
+        chainId === NetworkId.INK
+      ) {
+        return url;
+      } else {
+        return imageurl(url);
+      }
+    },
+    ipfsUrl: (cid, path) => {
+      return ipfsUrl(cid, path);
+    },
+  });
+  let result = {};
   try {
     result = await fetchWrapper.fetchNft(val?.platform, val?.token);
     // const urlParams = new URLSearchParams(result.image);
@@ -1197,7 +1339,7 @@ export const getFetchValues = async (val, chainId, account) => {
       token: val?.token,
       isERC721: result.owner ? true : false,
       owner: result.owner ? result.owner : account,
-      amount: val?.amount
+      amount: val?.amount,
     };
     return finalResult;
   } catch (e) {
@@ -1207,7 +1349,7 @@ export const getFetchValues = async (val, chainId, account) => {
       token: val?.token,
       isERC721: result && result.owner ? true : false,
       owner: result && result.owner ? result.owner : account,
-      amount: val?.amount
+      amount: val?.amount,
     };
     return finalResult;
   }
@@ -1217,28 +1359,34 @@ export const getDetails = async (chainId, account) => {
   let getNft;
 
   let results = [];
+  try {
+    getNft = await getNFTs(chainId, account);
+  } catch (e) {
+    console.log(e.message);
+  }
+  for (var i = 0; i < getNft?.length; i++) {
     try {
-      getNft = await getNFTs(chainId, account);
-    } catch (e) {
-      console.log(e.message)
+      const res = await getFetchValues(getNft[i], chainId, account);
+      results.push(res);
+    } catch (error) {
+      console.log(error);
     }
-    for (var i = 0; i < getNft?.length; i++) {
-      try {
-        const res = await getFetchValues(getNft[i], chainId, account);
-        results.push(res);
-      } catch (error) {
-        console.log(error)
-      }
-    }
+  }
   // setUpdate(results.map(item => { return { ...item, network: chainId } }))
-  return results.map(item => { return { ...item, network: chainId } })
+  return results.map((item) => {
+    return { ...item, network: chainId };
+  });
 };
 
 export const getListingDetail = async (id, chainId, library) => {
-  const bidify = new ethers.Contract(BIDIFY.address[chainId], BIDIFY.abi, library.getSigner())
-  let raw = await bidify.getListing(id.toString())
+  const bidify = new ethers.Contract(
+    BIDIFY.address[chainId],
+    BIDIFY.abi,
+    library.getSigner()
+  );
+  let raw = await bidify.getListing(id.toString());
   while (raw.creator === "0x0000000000000000000000000000000000000000") {
-    raw = await bidify.getListing(id.toString())
+    raw = await bidify.getListing(id.toString());
   }
   // console.log("raw", raw)
   const nullIfZeroAddress = (value) => {
@@ -1265,10 +1413,21 @@ export const getListingDetail = async (id, chainId, library) => {
   let marketplace = nullIfZeroAddress(raw.marketplace);
 
   let bids = [];
-  const web3 = new Web3(window.ethereum)
+  const web3 = new Web3(window.ethereum);
   const topic1 = "0x" + new web3.utils.BN(id).toString("hex").padStart(64, "0");
-  const ret = await axios.get(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 ? 'toBlock=latest&' : ''}topic0=0xdbf5dea084c6b3ed344cc0976b2643f2c9a3400350e04162ea3f7302c16ee914&topic0_1_opr=and&topic1=${chainId === 9001 || chainId === 100 ? topic1.toLowerCase() : topic1}&apikey=${snowApi[chainId]}`)
-  const logs = ret.data.result
+  const ret = await axios.get(
+    `${getLogUrl[chainId]}&fromBlock=0&${
+      chainId === 9001 ||
+      chainId === 100 ||
+      chainId === 61 ||
+      chainId === NetworkId.INK
+        ? "toBlock=latest&"
+        : ""
+    }topic0=0xdbf5dea084c6b3ed344cc0976b2643f2c9a3400350e04162ea3f7302c16ee914&topic0_1_opr=and&topic1=${
+      chainId === 9001 || chainId === 100 ? topic1.toLowerCase() : topic1
+    }&apikey=${snowApi[chainId]}`
+  );
+  const logs = ret.data.result;
   // console.log("bid logs", logs)
   for (let bid of logs) {
     bids.push({
@@ -1301,7 +1460,7 @@ export const getListingDetail = async (id, chainId, library) => {
 
     bids,
   };
-}
+};
 
 export const getLogs = async (chainId) => {
   const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
@@ -1309,43 +1468,88 @@ export const getLogs = async (chainId) => {
     "0x5424fbee1c8f403254bd729bf71af07aa944120992dfa4f67cd0e7846ef7b8de";
   let logs = [];
   try {
-    if (chainId === 43114 || chainId === 137 || chainId === 5 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100) {
-      let url = `${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 ? 'toBlock=latest&' : ''}address=${BIDIFY.address[chainId]}&topic0=${topic0}`;
+    if (
+      chainId === 43114 ||
+      chainId === 137 ||
+      chainId === 5 ||
+      chainId === 56 ||
+      chainId === 9001 ||
+      chainId === 1285 ||
+      chainId === 100 ||
+      chainId === NetworkId.INK
+    ) {
+      let url = `${getLogUrl[chainId]}&fromBlock=0&${
+        chainId === 9001 ||
+        chainId === 100 ||
+        chainId === 61 ||
+        chainId === NetworkId.INK
+          ? "toBlock=latest&"
+          : ""
+      }address=${BIDIFY.address[chainId]}&topic0=${topic0}`;
       if (chainId !== 9001 && chainId !== 100) {
         url += `&apikey=${snowApi[chainId]}`;
       }
-      const ret = await axios.get(url)
-      logs = ret.data.result
-    }
-    else logs = await web3.eth.getPastLogs({
-      fromBlock: "earliest",
-      toBlock: "latest",
-      address: BIDIFY.address[chainId],
-      topics: [topic0],
-    });
+      const ret = await axios.get(url);
+      logs = ret.data.result;
+    } else
+      logs = await web3.eth.getPastLogs({
+        fromBlock: "earliest",
+        toBlock: "latest",
+        address: BIDIFY.address[chainId],
+        topics: [topic0],
+      });
   } catch (e) {
-    console.log(e.message)
+    console.log(e.message);
   }
 
   return logs.length;
-}
+};
 
-export const getDetailFromId = async (id, chainId, account, image, metadataUrl, name, token, platform, isERC721, library) => {
-  let detail
-  if (chainId === 43114 || chainId === 137 || chainId === 5 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100) {
-    detail = await getListingDetail(id, chainId, library)
-  }
-  else detail = await getListing(id)
-  const fetchedValue = await getFetchValues(detail, chainId, account)
+export const getDetailFromId = async (
+  id,
+  chainId,
+  account,
+  image,
+  metadataUrl,
+  name,
+  token,
+  platform,
+  isERC721,
+  library
+) => {
+  let detail;
+  if (
+    chainId === 43114 ||
+    chainId === 137 ||
+    chainId === 5 ||
+    chainId === 56 ||
+    chainId === 9001 ||
+    chainId === 1285 ||
+    chainId === 100 ||
+    chainId === NetworkId.INK
+  ) {
+    detail = await getListingDetail(id, chainId, library);
+  } else detail = await getListing(id);
+  const fetchedValue = await getFetchValues(detail, chainId, account);
   const { owner, descrption } = fetchedValue;
-  return { owner, ...detail, network: chainId, image, metadataUrl, name, token, platform, isERC721, descrption }
-
-}
+  return {
+    owner,
+    ...detail,
+    network: chainId,
+    image,
+    metadataUrl,
+    name,
+    token,
+    platform,
+    isERC721,
+    descrption,
+  };
+};
 
 export const handleIpfsImageUrl = (displayImg) => {
-  if (displayImg.includes('ipfs://')) {
-    return displayImg.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  if (displayImg.includes("ipfs://")) {
+    return displayImg.replace("ipfs://", "https://ipfs.io/ipfs/");
   } else {
     return displayImg;
   }
-}
+};

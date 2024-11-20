@@ -38,7 +38,7 @@ import pauseImg from "../assets/icons/pause-circle.svg";
 
 //IMPORTING UTILITY PACKAGES
 
-import { baseUrl, BIDIFY, BIT, EXPLORER, getLogUrl, getSymbol, snowApi, URLS } from "../utils/config";
+import { baseUrl, BIDIFY, BIT, EXPLORER, getLogUrl, getSymbol, NetworkId, snowApi, URLS } from "../utils/config";
 import axios from "axios";
 import PromptFinish from "../patterns/promptFinish";
 import { ErrorMessage, Field, Form, Formik } from "formik";
@@ -151,8 +151,8 @@ const DetailsPage = () => {
       "0x5424fbee1c8f403254bd729bf71af07aa944120992dfa4f67cd0e7846ef7b8de";
     let logs = [];
     try {
-      if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100) {
-        const ret = await axios.get(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 ? 'toBlock=latest&' : ''}address=${BIDIFY.address[chainId]}&topic0=${topic0}&apikey=${snowApi[chainId]}`)
+      if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100 || chainId === NetworkId.INK) {
+        const ret = await axios.get(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 || chainId === NetworkId.INK ? 'toBlock=latest&' : ''}address=${BIDIFY.address[chainId]}&topic0=${topic0}&apikey=${snowApi[chainId]}`)
         logs = ret.data.result
       }
       else logs = await web3.eth.getPastLogs({
@@ -261,8 +261,8 @@ const DetailsPage = () => {
     const topic = "0x" + parseInt(data[0].token).toString(16).padStart(64, "0")
     let logs = []
     // let logs_1155 = []
-    if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100) {
-      const ret = await axios.get(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 ? 'toBlock=latest&' : ''}address=${data[0].platform}&topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef&topic0_3_opr=and&topic3=${chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic}&apikey=${snowApi[chainId]}`).catch(e => console.log("getNft error"))
+    if (chainId === 43114 || chainId === 137 || chainId === 56 || chainId === 9001 || chainId === 1285 || chainId === 100 || chainId === NetworkId.INK) {
+      const ret = await axios.get(`${getLogUrl[chainId]}&fromBlock=0&${chainId === 9001 || chainId === 100 || chainId === 61 || chainId === NetworkId.INK ? 'toBlock=latest&' : ''}address=${data[0].platform}&topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef&topic0_3_opr=and&topic3=${chainId === 9001 || chainId === 100 ? topic.toLowerCase() : topic}&apikey=${snowApi[chainId]}`).catch(e => console.log("getNft error"))
       logs = ret.data.result
     }
 

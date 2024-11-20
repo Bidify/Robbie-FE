@@ -9,6 +9,7 @@ import logo_evmos from "../assets/logo/bidifylogo_evmos.png";
 import logo_movr from "../assets/logo/bidifylogo_movr.png";
 import logo_optimism from "../assets/logo/bidifylogo_optimism.png";
 import logo_arbitrum from "../assets/logo/bidifylogo_arbitrum.png";
+import logo_ink from "../assets/logo/bidifylogo_ink.png";
 // import logo_zksync from "../assets/logo/bidifylogo_zksync.png";
 
 import ethLoader from "../assets/icons/loader_3d.gif";
@@ -23,6 +24,7 @@ import etcLoader from "../assets/icons/loader_etc.gif";
 import arbitrumLoader from "../assets/icons/loader_arbitrum.gif";
 import optimismLoader from "../assets/icons/loader_optimism.gif";
 // import zksyncLoader from "../assets/icons/loader_3d_zksync.gif";
+import inkLoader from "../assets/icons/loader_ink.gif";
 
 export const baseUrl = process.env.REACT_APP_API_URI
 export const NetworkId = {
@@ -39,7 +41,8 @@ export const NetworkId = {
   OPTIMISM: 10,
   zkSyncTestnet: 280,
   zkSyncMainnet: 324,
-  GOERLI: 5
+  GOERLI: 5,
+  INK: 763373,
 }
 export const NeworkOrder = [
   NetworkId.MATIC, 
@@ -53,6 +56,7 @@ export const NeworkOrder = [
   NetworkId.GOERLI,
   NetworkId.ARBITRUM,
   NetworkId.OPTIMISM,
+  NetworkId.INK
 ]
 export const NetworkData = {
   [NetworkId.MATIC]: {
@@ -143,6 +147,14 @@ export const NetworkData = {
     logo: logo_eth,
     loader: ethLoader
   },
+  [NetworkId.INK]: {
+    symbol: "ETH",
+    id: "763373",
+    name: "INKSEPOLIA",
+    color: "#6c54bc",
+    logo: logo_ink,
+    loader: inkLoader,
+  },
   // [NetworkId.zkSyncTestnet]: {
   //   symbol: "ETH",
   //   id: "280",
@@ -170,7 +182,7 @@ export const getSymbol = (chainId) => {
   if(chainId) return NetworkData[chainId].symbol;
   else return "N/A"
 }
-export const supportedChainIds = [ NetworkId.MATIC, NetworkId.BNB, NetworkId.AVAX, NetworkId.ETC, NetworkId.MOVR, NetworkId.XDAI, NetworkId.EVMOS, NetworkId.EGEM, NetworkId.zkSyncTestnet, NetworkId.GOERLI]
+export const supportedChainIds = [ NetworkId.MATIC, NetworkId.BNB, NetworkId.AVAX, NetworkId.ETC, NetworkId.MOVR, NetworkId.XDAI, NetworkId.EVMOS, NetworkId.EGEM, NetworkId.zkSyncTestnet, NetworkId.GOERLI, NetworkId.INK]
 export const getLogUrl = {
   [NetworkId.MATIC]: "https://api.polygonscan.com/api?module=logs&action=getLogs",
   [NetworkId.AVAX]: "https://api.snowtrace.io/api?module=logs&action=getLogs",
@@ -181,6 +193,8 @@ export const getLogUrl = {
   [NetworkId.zkSyncTestnet]: "https://zksync2-mainnet.zkscan.io/api?module=logs&action=getLogs",
   [NetworkId.GOERLI]: "https://api-goerli.etherscan.io/api?module=logs&action=getLogs",
   [NetworkId.EGEM]: "https://blockscout.egem.io/api?module=logs&action=getLogs",
+  [NetworkId.INK]:
+    "https://explorer-sepolia.inkonchain.com/api?module=logs&action=getLogs",
 }
 export const snowApi = {
   [NetworkId.AVAX]: "Y72B4EMH42SYS5C3RGGIDJM9HPQKYUSUTH",
@@ -205,6 +219,7 @@ export const EXPLORER = {
   [NetworkId.zkSyncTestnet]: "https://goerli.explorer.zksync.io",
   [NetworkId.zkSyncMainnet]: "https://explorer.zksync.io",
   [NetworkId.GOERLI]: "https://goerli.etherscan.io",
+  [NetworkId.INK]: "https://explorer-sepolia.inkonchain.com",
 }
 
 export const URLS = {
@@ -226,6 +241,7 @@ export const URLS = {
   [NetworkId.zkSyncTestnet]: "https://testnet.era.zksync.dev",
   [NetworkId.zkSyncMainnet]: "https://mainnet.era.zksync.io",
   [NetworkId.GOERLI]: "https://goerli.infura.io/v3/0c8149f8e63b4b818d441dd7f74ab618",
+  [NetworkId.INK]: "https://rpc-qnd-sepolia.inkonchain.com",
 };
 
 export const BIDIFY = {
@@ -243,6 +259,7 @@ export const BIDIFY = {
     [NetworkId.zkSyncTestnet]: "0x6eB662c9464F5bc1476efe8E1834E0d616568a8b",
     [NetworkId.zkSyncMainnet]: "0x6eB662c9464F5bc1476efe8E1834E0d616568a8b",
     [NetworkId.GOERLI]: "0xa13a7b348d7b7446cfB401B47C0966C19e1cfD76",
+    [NetworkId.INK]: "0x0288EE0a9F900B6E0cd5522907548f3DA0cdace9",
   },
   abi: [
     {
