@@ -32,7 +32,7 @@ const Header = ({ title, description }) => {
     userDispatch({
       type: "RESET",
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // HANDLING SEARCH METHOD
@@ -50,7 +50,11 @@ const Header = ({ title, description }) => {
       }
     >
       <Link to="/" className="logo">
-        <img src={NetworkData[(account ? chainId : 5)].logo} alt="logo" width={48} />
+        <img
+          src={NetworkData[account ? chainId : 763373].logo}
+          alt="logo"
+          width={48}
+        />
         <Text variant="primary">{getSymbol(chainId)}</Text>
       </Link>
       <div className="content">

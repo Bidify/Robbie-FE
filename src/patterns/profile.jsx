@@ -21,9 +21,15 @@ import refresh from "../assets/icons/youtube.svg";
 
 import { UserContext } from "../store/contexts";
 import { useWeb3React } from "@web3-react/core";
-import { EXPLORER, getSymbol, NetworkData, supportedChainIds, URLS, NeworkOrder } from "../utils/config";
+import {
+  EXPLORER,
+  getSymbol,
+  NetworkData,
+  supportedChainIds,
+  URLS,
+  NeworkOrder,
+} from "../utils/config";
 import { useEffect } from "react";
-// import { getSymbol } from "../utils/getCurrencySymbol";
 import { injected } from "../utils/connector";
 
 const upcomingFeatures = [
@@ -37,34 +43,29 @@ const upcomingFeatures = [
 
 const Profile = () => {
   //INITIALIZING HOOKS
-  // const [currency, setCurrency] = useState(null);
   const { userState, userDispatch } = useContext(UserContext);
   const { account, active, activate, chainId } = useWeb3React();
 
   const [isCopied, setIsCopied] = useState(false);
-  // const [isLoading, setIsLoading] = useState(false);
   const [toggleSwitchNetwork, setToggleSwitchNetwork] = useState(false);
   const [symbol, setSymbol] = useState("");
   const [networkName, setNetworkName] = useState();
 
   useEffect(() => {
-    console.log(chainId)
     const getData = async () => {
       if (account) {
         const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
         let _balance = await web3.eth.getBalance(account); //Will give value in.
         _balance = web3.utils.fromWei(_balance);
-        console.log(_balance)
-        // setBalance(_balance)
         userDispatch({
-            type: "SET_BALANCE",
-            payload: { balance: _balance },
-          });
-        setSymbol(getSymbol(chainId))
-        return
+          type: "SET_BALANCE",
+          payload: { balance: _balance },
+        });
+        setSymbol(getSymbol(chainId));
+        return;
       }
-    }
-    getData()
+    };
+    getData();
   }, [account, chainId, userDispatch]);
 
   const switchNetwork = async (_chainId) => {
@@ -79,23 +80,22 @@ const Profile = () => {
       setToggleSwitchNetwork(false);
     } catch (error) {
       // This error code indicates that the chain has not been added to MetaMask.
-      console.log("error", error)
+      console.log("error", error);
       if (error.code === 4902) {
         try {
-          console.log(Web3.utils.toHex(_chainId), URLS[_chainId])
           await window.ethereum.request({
             method: "wallet_addEthereumChain",
             params: [
-              { 
-                chainId: Web3.utils.toHex(_chainId), 
+              {
+                chainId: Web3.utils.toHex(_chainId),
                 rpcUrls: [URLS[_chainId]],
                 chainName: NetworkData[_chainId].name,
                 nativeCurrency: {
                   name: NetworkData[_chainId].name,
                   symbol: NetworkData[_chainId].symbol,
-                  decimals: 18
+                  decimals: 18,
                 },
-                blockExplorerUrls: [EXPLORER[_chainId]]
+                blockExplorerUrls: [EXPLORER[_chainId]],
               },
             ],
           });
@@ -108,9 +108,9 @@ const Profile = () => {
   };
 
   const handleSwitchNetwork = async (_chainId) => {
-    if(!supportedChainIds.includes(Number(_chainId))) return;
-    activate(injected)
-    await switchNetwork(Number(_chainId))
+    if (!supportedChainIds.includes(Number(_chainId))) return;
+    activate(injected);
+    await switchNetwork(Number(_chainId));
     setToggleSwitchNetwork(false);
   };
 
@@ -120,12 +120,12 @@ const Profile = () => {
         type: "SET_BALANCE",
         payload: { balance: "" },
       });
-      setSymbol("")
-      setNetworkName("")
+      setSymbol("");
+      setNetworkName("");
     }
     try {
       if (active) {
-        setNetworkName(NetworkData[chainId].name)
+        setNetworkName(NetworkData[chainId].name);
       }
     } catch (err) {
       window.alert("Switch to Rinkeby Testnet");
@@ -143,9 +143,16 @@ const Profile = () => {
     <div className="switchnetwork_modal">
       {NeworkOrder.map((val, index) => {
         return (
-          <div key={index} onClick={() => handleSwitchNetwork(NetworkData[val].id)}>
+          <div
+            key={index}
+            onClick={() => handleSwitchNetwork(NetworkData[val].id)}
+          >
             <mark style={{ background: NetworkData[val].color }}></mark>
-            <code>{NetworkData[val].name}&nbsp;{!supportedChainIds.includes(Number(NetworkData[val].id)) && "(Coming soon)"}</code>
+            <code>
+              {NetworkData[val].name}&nbsp;
+              {!supportedChainIds.includes(Number(NetworkData[val].id)) &&
+                "(Coming soon)"}
+            </code>
           </div>
         );
       })}
@@ -158,28 +165,44 @@ const Profile = () => {
         <div style={{ position: "relative" }}>
           <Text>Metamask</Text>
           <Text style={{ marginTop: 8 }}>
-            <Text component="span" className="net-selection" onClick={() => setToggleSwitchNetwork(!toggleSwitchNetwork)} >Select Network<i></i></Text>
-            <a href="https://youtu.be/F74ayyxlRYk" tarkget="_blank" rel="noreferrer" style={{ display: "flex" }}>
+            <Text
+              component="span"
+              className="net-selection"
+              onClick={() => setToggleSwitchNetwork(!toggleSwitchNetwork)}
+            >
+              Select Network<i></i>
+            </Text>
+            <a
+              href="https://youtu.be/F74ayyxlRYk"
+              tarkget="_blank"
+              rel="noreferrer"
+              style={{ display: "flex" }}
+            >
               <img
                 src={refresh}
                 alt="tutorial"
                 style={{ cursor: "pointer", width: 22 }}
               />
             </a>
-
           </Text>
           {toggleSwitchNetwork && renderSwitchNetwork}
         </div>
         <img src={metamask} alt="metamask logo" width={35} />
       </div>
-      <Text component="span" variant="primary">{networkName}</Text>
+      <Text component="span" variant="primary">
+        {networkName}
+      </Text>
       <Text className="account_info">
-        {
-          !account ? <Text component="span" style={{ fontSize: 11 }}>No account</Text> : <Text component="span" style={{ fontSize: 11 }}>{`${account?.slice(
+        {!account ? (
+          <Text component="span" style={{ fontSize: 11 }}>
+            No account
+          </Text>
+        ) : (
+          <Text component="span" style={{ fontSize: 11 }}>{`${account?.slice(
             0,
             4
           )}....${account?.slice(account?.length - 12)}`}</Text>
-        }
+        )}
         <CopyToClipboard text={account}>
           <img
             src={copy}
@@ -193,7 +216,10 @@ const Profile = () => {
           copied
         </span>
       </Text>
-      <Text style={{ fontWeight: 600 }}>{userState?.balance ? userState?.balance.toString().slice(0, 7) : 0} {symbol ? symbol : ""}</Text>
+      <Text style={{ fontWeight: 600 }}>
+        {userState?.balance ? userState?.balance.toString().slice(0, 7) : 0}{" "}
+        {symbol ? symbol : ""}
+      </Text>
     </div>
   );
 

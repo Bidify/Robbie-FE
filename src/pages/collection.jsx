@@ -20,9 +20,8 @@ import { UserContext } from "../store/contexts";
 
 //IMPORTING UTILITY PACKAGES
 
-import { baseUrl } from "../utils/config";
+import { baseUrl, NetworkId } from "../utils/config";
 import axios from "axios";
-import { getNftsByMoralis } from "../utils/NFTFetcher";
 import { getFetchValues, getDetails } from "../utils/Bidify";
 
 const Collection = () => {
@@ -31,13 +30,9 @@ const Collection = () => {
   const { userDispatch } = useContext(UserContext);
 
   const { active, chainId, account } = useWeb3React();
-
-  // const [update, setUpdate] = useState([])
-
   const [nfts, setNfts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  const [cursor, setCursor] = useState(null);
   const [chainChanged, setChainChanged] = useState(false);
 
   const flipRefresh = () => {
@@ -50,11 +45,13 @@ const Collection = () => {
       type: "MY_COLLECTIONS",
       payload: { results: undefined },
     });
+    let results = [];
     const response = await axios.get(`${baseUrl}/collection`, {
       params: { chainId, owner: account },
     });
-    const results = response.data;
-    if (results.length === 0) {
+    results = response.data;
+
+    if (results.length === 0 && chainId === NetworkId.INK) {
       const newData = await getDetails(chainId, account);
       console.log(newData);
       setNfts([...newData]);
@@ -62,49 +59,31 @@ const Collection = () => {
       await handleUpdate(newData);
       setLoading(false);
     } else {
-      setNfts([...results]);
+      setNfts(results);
       setLoading(false);
-      // setTimeout(async() => {
-      await updateDatabase(results);
-      // }, 3000)
+      if (chainId === NetworkId.INK) await updateDatabase(results);
     }
-    // }
     setChainChanged(false);
-  };
-
-  const loadNftsFromMoralis = async () => {
-    const resp = await getNftsByMoralis(account, cursor, chainId);
-    setCursor(resp.cursor);
-    let tmpNfts = [...nfts];
-
-    for (let i = 0; i < resp.nfts.length; i++) {
-      const retdata = resp.nfts[i];
-      tmpNfts.push(retdata);
-    }
-    setNfts([...tmpNfts]);
   };
 
   useEffect(() => {
     if (nfts.length === 0 && chainChanged && account != null) {
+      console.log("fetch again");
       getCollection();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nfts]);
+  }, [nfts, chainChanged, account]);
 
   useEffect(() => {
     setNfts([]);
     setChainChanged(true);
+    console.log("update ths collection show");
   }, [refresh]);
 
   const updateDatabase = async (results) => {
     console.log("before updateing", results.length);
     console.log("updating database");
     const newData = await getDetails(chainId, account);
-    // console.log("comparing", newData, newData.length)
-    // if(newData.length === )
-    // const dataToAdd = newData.filter(nft => results.includes(nft))
-    // const dataToRemove = results.filter(nft => newData.includes(nft))
-    // console.log(dataToAdd, dataToRemove)
     await axios.put(`${baseUrl}/admincollection`, {
       data: newData,
       chainId,
@@ -115,8 +94,6 @@ const Collection = () => {
       setNfts([]);
       setChainChanged(true);
     }
-    // if(dataToAdd.length) await axios.post(`${baseUrl}/admincollection`, dataToAdd)
-    // if(dataToRemove.length) await axios.delete(`${baseUrl}/admincollection`, dataToRemove)
   };
   useEffect(() => {
     if (account !== undefined) {
@@ -128,8 +105,6 @@ const Collection = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, chainId]);
 
-  // const account = "0x0B172a4E265AcF4c2E0aB238F63A44bf29bBd158";
-
   const renderCards = (
     <div className="card_wrapper">
       {nfts?.map((lists, index) => {
@@ -138,17 +113,11 @@ const Collection = () => {
             {...lists}
             getDetails={() => {}}
             getFetchValues={getFetchValues}
-            key={index.toString()}
+            key={index}
             flipRefresh={flipRefresh}
           />
         );
       })}
-
-      {cursor && (
-        <>
-          <button onClick={loadNftsFromMoralis}>show more</button>
-        </>
-      )}
     </div>
   );
 
@@ -172,10 +141,8 @@ const Collection = () => {
     </div>
   );
   const handleUpdate = async (update) => {
-    // console.log("updating", update)
     if (update.length === 0) return;
     await axios.post(`${baseUrl}/admincollection`, update);
-    // console.log('update result', res)
   };
 
   return (

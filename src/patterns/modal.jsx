@@ -9,17 +9,17 @@ import "../styles/patterns/modal.scss";
 //IMPORTING COMPONENTS
 
 import { Text, Button } from "../components";
-import { handleIpfsImageUrl, isValidUrl } from "../utils/Bidify";
+import { handleIpfsImageUrl, isCID, isValidUrl } from "../utils/Bidify";
 
 //IMPORTING MEDIA ASSETS
 
 import close from "../assets/icons/close.svg";
 import playImg from "../assets/icons/play-circle.svg";
 import pauseImg from "../assets/icons/pause-circle.svg";
-import NoImage from "../assets/placeholders/nft-placeholder.svg"
-import NFTPortImage from "../assets/placeholders/nftport.gif"
-import FleekImage from "../assets/placeholders/fleek.gif"
-import IpfsImage from "../assets/placeholders/ipfs.gif"
+import NoImage from "../assets/placeholders/nft-placeholder.svg";
+import NFTPortImage from "../assets/placeholders/nftport.gif";
+import FleekImage from "../assets/placeholders/fleek.gif";
+import IpfsImage from "../assets/placeholders/ipfs.gif";
 
 const backdrop = {
   hidden: { opacity: 0 },
@@ -42,8 +42,8 @@ export const CollectionModal = (props) => {
   const [isVideo, setIsVideo] = useState(false);
   const [imageUrl, SetImageUrl] = useState("");
   const videoRef = useRef(null);
-  const [loadingImage, setLoadingImage] = useState(true)
-  const [placeholder, setPlaceholder] = useState("")
+  const [loadingImage, setLoadingImage] = useState(true);
+  const [placeholder, setPlaceholder] = useState("");
   useEffect(() => {
     const setImage = async () => {
       if (image) {
@@ -54,9 +54,13 @@ export const CollectionModal = (props) => {
         } else {
           displayImg = image;
         }
-        SetImageUrl(handleIpfsImageUrl(displayImg))
+        if (isCID(displayImg))
+          displayImg = `https://ipfs.io/ipfs/${displayImg}`;
+        SetImageUrl(handleIpfsImageUrl(displayImg));
         try {
-          const response = await fetch(displayImg);
+          const response = await fetch(
+            `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${displayImg}`
+          ).catch(console.error);
           const contentType = response.headers.get("content-type");
           if (contentType.includes("video")) {
             setIsVideo(true);
@@ -64,17 +68,16 @@ export const CollectionModal = (props) => {
         } catch (e) {
           setIsVideo(false);
         }
-        if (image.includes('storage.googleapis.com')) {
-          setPlaceholder(NFTPortImage)
-        } else if (image.includes('fleek.co')) {
-          setPlaceholder(FleekImage)
+        if (image.includes("storage.googleapis.com")) {
+          setPlaceholder(NFTPortImage);
+        } else if (image.includes("fleek.co")) {
+          setPlaceholder(FleekImage);
         } else {
-          setPlaceholder(IpfsImage)
+          setPlaceholder(IpfsImage);
         }
       }
-    }
+    };
     setImage();
-    
   }, [setIsModal, image]);
 
   const handlePlay = () => {
@@ -130,16 +133,24 @@ export const CollectionModal = (props) => {
           </>
         ) : (
           <>
-            {loadingImage && <img className="placeholder" src={placeholder} alt="" />}
+            {loadingImage && (
+              <img className="placeholder" src={placeholder} alt="" />
+            )}
             <LazyLoadImage
               effect="blur"
-              src={isValidUrl(imageUrl) ? `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${imageUrl}` : imageUrl}
-              alt="art"
-              placeholder={
-                <div></div>
+              src={
+                isValidUrl(imageUrl)
+                  ? `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${imageUrl}`
+                  : imageUrl
               }
-              onError={(e) => {setPlaceholder(NoImage)}}
-              afterLoad={() => {setLoadingImage(false)}}
+              alt="art"
+              placeholder={<div></div>}
+              onError={(e) => {
+                setPlaceholder(NoImage);
+              }}
+              afterLoad={() => {
+                setLoadingImage(false);
+              }}
             />
           </>
         )}
@@ -183,7 +194,15 @@ export const CollectionModal = (props) => {
 };
 
 export const LiveAuctionModal = (props) => {
-  const { isModal, setIsModal, currentBid, nextBid, handleBidMethod, symbol, endingPrice } = props;
+  const {
+    isModal,
+    setIsModal,
+    currentBid,
+    nextBid,
+    handleBidMethod,
+    symbol,
+    endingPrice,
+  } = props;
   const [yourBid, setYourBid] = useState(nextBid);
   const renderModalHeader = (
     <div className="modal_header">
@@ -197,8 +216,8 @@ export const LiveAuctionModal = (props) => {
     </div>
   );
   useEffect(() => {
-    setYourBid(nextBid)
-  }, [nextBid])
+    setYourBid(nextBid);
+  }, [nextBid]);
   const renderForm = (
     <div className="create_form">
       <Text>Current bid</Text>
@@ -213,15 +232,25 @@ export const LiveAuctionModal = (props) => {
       </div>
       <Text>Buy it now price</Text>
       <div className="form_input">
-        <section>{endingPrice !== '0' ? endingPrice : "N/A"}</section>
+        <section>{endingPrice !== "0" ? endingPrice : "N/A"}</section>
         <Text style={{ color: "#F79420" }}>{symbol}</Text>
       </div>
       <Text>Your bid</Text>
       <div className="form_input">
-        <input type="number" defaultValue={nextBid} onChange={(e) => {setYourBid(e.target.value)}} />
+        <input
+          type="number"
+          defaultValue={nextBid}
+          onChange={(e) => {
+            setYourBid(e.target.value);
+          }}
+        />
         <Text style={{ color: "#F79420" }}>{symbol}</Text>
       </div>
-      <Button variant="primary" type="submit" onClick={() => handleBidMethod(yourBid)}>
+      <Button
+        variant="primary"
+        type="submit"
+        onClick={() => handleBidMethod(yourBid)}
+      >
         Place Your Bid
       </Button>
     </div>

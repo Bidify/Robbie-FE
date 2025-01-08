@@ -21,15 +21,8 @@ import { UserContext } from "../store/contexts";
 
 //IMPORTING UTILITY PACKAGES
 
-import {
-  BIDIFY,
-  URLS,
-  baseUrl,
-  snowApi,
-  getLogUrl,
-  NetworkId,
-} from "../utils/config";
-import { getDecimals, getListing, unatomic } from "../utils/Bidify";
+import { BIDIFY, URLS, baseUrl, snowApi, getLogUrl } from "../utils/config";
+import { getDecimals, unatomic } from "../utils/Bidify";
 
 import axios from "axios";
 
@@ -72,42 +65,14 @@ const LiveAuction = () => {
       type: "LIVE_AUCTION_NFT",
       payload: { results: undefined },
     });
-    //const Bidify = new web3.eth.Contract(BIDIFY.abi, BIDIFY.address);
-    //const totalAuction = await Bidify.methods.totalListings().call();
-
     const totalAuction = await getLogs();
     console.log("total auction", totalAuction);
     let Lists = [];
-    // console.log("totalAuction", totalAuction)
-    const pLists = [];
     for (let i = 0; i < totalAuction; i++) {
       let result;
-      if (
-        chainId === 43114 ||
-        chainId === 137 ||
-        chainId === 56 ||
-        chainId === 9001 ||
-        chainId === 1285 ||
-        chainId === NetworkId.INK
-      ) {
-        result = await getListingDetail(i);
-        Lists[i] = result;
-      } else {
-        result = getListing(i.toString());
-        // console.log(result)
-        pLists[i] = result;
-        // Lists[i] = result
-      }
+      result = await getListingDetail(i);
+      Lists[i] = result;
     }
-
-    if (
-      chainId !== 43114 &&
-      chainId !== 137 &&
-      chainId !== 56 &&
-      chainId !== 9001 &&
-      chainId !== 1285
-    )
-      Lists = await Promise.all(pLists);
     getDetails(Lists);
     console.log("fetched data from on-chain");
   };
@@ -133,7 +98,6 @@ const LiveAuction = () => {
     let nextBid = await bidify.getNextBid(id.toString());
     let endingPrice = raw.endingPrice;
     let decimals = await getDecimals(currency);
-    // console.log("compareing", currentBid.toString() === nextBid.toString(), currentBid, nextBid)
     if (currentBid.toString() === nextBid.toString()) {
       currentBid = null;
     } else {
@@ -148,9 +112,9 @@ const LiveAuction = () => {
     const topic1 =
       "0x" + new web3.utils.BN(id).toString("hex").padStart(64, "0");
     const ret = await axios.get(
-      `${getLogUrl[chainId]}&fromBlock=0&${
-        chainId === 9001 || chainId === NetworkId.INK ? "toBlock=latest&" : ""
-      }topic0=0xdbf5dea084c6b3ed344cc0976b2643f2c9a3400350e04162ea3f7302c16ee914&topic0_1_opr=and&topic1=${
+      `${
+        getLogUrl[chainId]
+      }&fromBlock=0&toBlock=latest&topic0=0x4c3c1c767fe4a41c6b19602745478b39af5f2a01becc2a37fb82291014d72770&topic0_1_opr=and&topic1=${
         chainId === 9001 ? topic1.toLowerCase() : topic1
       }&apikey=${snowApi[chainId]}`
     );
@@ -159,7 +123,7 @@ const LiveAuction = () => {
       bids.push({
         bidder: "0x" + bid.topics[2].substr(-40),
         price: unatomic(
-          new web3.utils.BN(bid.data.substr(2), "hex").toString(),
+          parseInt(bid.data.substr(2, 64), 16).toString(),
           decimals
         ),
       });
@@ -189,76 +153,25 @@ const LiveAuction = () => {
   };
 
   const getLogs = async () => {
-    const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
     const topic0 =
       "0x5424fbee1c8f403254bd729bf71af07aa944120992dfa4f67cd0e7846ef7b8de";
     let logs = [];
     try {
-      if (
-        chainId === 43114 ||
-        chainId === 137 ||
-        chainId === 56 ||
-        chainId === 9001 ||
-        chainId === 1285 ||
-        chainId === NetworkId.INK
-      ) {
-        const ret = await axios.get(
-          `${getLogUrl[chainId]}&fromBlock=0&${
-            chainId === 9001 || chainId === NetworkId.INK
-              ? "toBlock=latest&"
-              : ""
-          }address=${BIDIFY.address[chainId]}&topic0=${topic0}&apikey=${
-            snowApi[chainId]
-          }`
-        );
-        logs = ret.data.result;
-      } else
-        logs = await web3.eth.getPastLogs({
-          fromBlock: "earliest",
-          toBlock: "latest",
-          address: BIDIFY.address[chainId],
-          topics: [topic0],
-        });
+      const ret = await axios.get(
+        `${getLogUrl[chainId]}&fromBlock=0&toBlock=latest&address=${BIDIFY.address[chainId]}&topic0=${topic0}&apikey=${snowApi[chainId]}`
+      );
+      logs = ret.data.result;
     } catch (e) {
       console.log(e.message);
     }
-
-    // let totalLists = 0;
-    // for (let log of logs) {
-    //   totalLists++;
-    // }
-
     return logs.length;
   };
 
   const getFetchValues = async (val) => {
     let provider;
-    switch (chainId) {
-      case 1:
-        provider = new ethers.providers.InfuraProvider(
-          "mainnet",
-          "0c8149f8e63b4b818d441dd7f74ab618"
-        );
-        break;
-      case 5:
-        provider = new ethers.providers.InfuraProvider(
-          "goerli",
-          "0c8149f8e63b4b818d441dd7f74ab618"
-        );
-        break;
-      case 1987:
-      case 43114:
-      case 137:
-      case 56:
-      case 9001:
-      case 1285:
-      case 61:
-      case 100:
-        provider = new ethers.providers.JsonRpcProvider(URLS[chainId]);
-        break;
-      default:
-        console.log("select valid chain");
-    }
+    if (URLS[chainId])
+      provider = new ethers.providers.JsonRpcProvider(URLS[chainId]);
+    else console.log("select valid chain");
 
     const ethersConfig = {
       ethers: { Contract },
@@ -272,7 +185,6 @@ const LiveAuction = () => {
     }
 
     function imageurl(url) {
-      // const string = url;
       const check = url.substr(16, 4);
       console.log("imageurl ====== ", url);
       if (url.includes("ipfs://"))
@@ -337,6 +249,7 @@ const LiveAuction = () => {
   };
 
   const handleUpdate = async () => {
+    console.log(update);
     if (update.length === 0) return;
     const res = await axios.post(`${baseUrl}/admin`, update);
     console.log("updated database");
@@ -344,7 +257,7 @@ const LiveAuction = () => {
   };
   const renderCards = (
     <>
-      {account === "0x484D53603331e4030439c3C58f51f9d433Df1F39" && (
+      {account === "0xc4c9Cc5F90460f72ceeD6E884FC372c8a68fd4Fe" && (
         <button onClick={handleUpdate}>update database</button>
       )}
       {userState?.searchResults?.length === undefined ? (

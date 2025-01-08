@@ -18,30 +18,51 @@ import { UserContext } from "../store/contexts";
 //IMPORTING MEDIA ASSETS
 
 import lock from "../assets/icons/lock.svg";
-import NFTPortImage from "../assets/placeholders/nftport.gif"
-import FleekImage from "../assets/placeholders/fleek.gif"
-import IpfsImage from "../assets/placeholders/ipfs.gif"
-import NoImage from "../assets/placeholders/nft-placeholder.svg"
+import NFTPortImage from "../assets/placeholders/nftport.gif";
+import FleekImage from "../assets/placeholders/fleek.gif";
+import IpfsImage from "../assets/placeholders/ipfs.gif";
+import NoImage from "../assets/placeholders/nft-placeholder.svg";
 
 //IMPORTING UTILITY PACKGAES
 
-import { isValidUrl, getBalance, getDetailFromId } from "../utils/Bidify";
+import {
+  isValidUrl,
+  getBalance,
+  getDetailFromId,
+  isCID,
+} from "../utils/Bidify";
 import { getTokenSymbol } from "../utils/getCurrencySymbol";
-import { baseUrl, BIDIFY, getSymbol } from "../utils/config";
+import { baseUrl, BIDIFY, getSymbol, NetworkId } from "../utils/config";
 import axios from "axios";
-import { ethers } from "ethers"
+import { ethers } from "ethers";
 import PromptFinish from "./promptFinish";
 import { signBid, bid, handleIpfsImageUrl } from "../utils/Bidify";
 
 const Card = (props) => {
   const { userDispatch } = useContext(UserContext);
-  const { name, creator, image, currentBid, nextBid, endTime, id, currency, getLists, highBidder, endingPrice, token, platform, isERC721, metadataUrl } =
-    props;
-  const imageToDisplay = image
+  const {
+    name,
+    creator,
+    image,
+    currentBid,
+    nextBid,
+    endTime,
+    id,
+    currency,
+    getLists,
+    highBidder,
+    endingPrice,
+    token,
+    platform,
+    isERC721,
+    metadataUrl,
+  } = props;
+  const imageToDisplay = image;
   const { account, chainId, library } = useWeb3React();
   const history = useHistory();
   const isUser = account?.toLocaleLowerCase() === creator?.toLocaleLowerCase();
-  const isHighBidder = account?.toLocaleLowerCase() === highBidder?.toLocaleLowerCase();
+  const isHighBidder =
+    account?.toLocaleLowerCase() === highBidder?.toLocaleLowerCase();
   const [isModal, setIsModal] = useState(false);
   const [processContent, setProcessContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -51,19 +72,19 @@ const Card = (props) => {
   const [errorMessage, setErrorMessage] = useState();
   const [isVideo, setIsVideo] = useState(false);
   const [imageUrl, SetImageUrl] = useState("");
-  const [symbol, setSymbol] = useState('');
-  const [transaction, setTransaction] = useState()
-  const [latestDetail, setLatestDetail] = useState(props)
-  const [loadingImage, setLoadingImage] = useState(true)
-  const [placeholder, setPlaceholder] = useState("")
+  const [symbol, setSymbol] = useState("");
+  const [transaction, setTransaction] = useState();
+  const [latestDetail, setLatestDetail] = useState(props);
+  const [loadingImage, setLoadingImage] = useState(true);
+  const [placeholder, setPlaceholder] = useState("");
   useEffect(() => {
     if (imageToDisplay) {
-      if (imageToDisplay.includes('storage.googleapis.com')) {
-        setPlaceholder(NFTPortImage)
-      } else if (imageToDisplay.includes('fleek.co')) {
-        setPlaceholder(FleekImage)
+      if (imageToDisplay.includes("storage.googleapis.com")) {
+        setPlaceholder(NFTPortImage);
+      } else if (imageToDisplay.includes("fleek.co")) {
+        setPlaceholder(FleekImage);
       } else {
-        setPlaceholder(IpfsImage)
+        setPlaceholder(IpfsImage);
       }
       const arr = imageToDisplay.split("url=");
       let displayImg = "";
@@ -72,61 +93,85 @@ const Card = (props) => {
       } else {
         displayImg = imageToDisplay;
       }
-      SetImageUrl(handleIpfsImageUrl(displayImg))
-      fetch(displayImg).then(response => {
-        const contentType = response.headers.get("content-type");
-        if (contentType.includes("video")) {
-          setIsVideo(true);
-        }
-      }).catch(e => {
-        setIsVideo(false);
-      })
-    }
-  }, [imageToDisplay, setPlaceholder])
-  // useEffect(() => {
-  //   if (isSuccess) getLists();
 
-  //   return () => setIsSuccess(false);
-  // }, [isSuccess]);
+      if (isCID(displayImg)) displayImg = `https://ipfs.io/ipfs/${displayImg}`;
+      SetImageUrl(handleIpfsImageUrl(displayImg));
+      fetch(displayImg)
+        .then((response) => {
+          const contentType = response.headers.get("content-type");
+          if (contentType.includes("video")) {
+            setIsVideo(true);
+          }
+        })
+        .catch((e) => {
+          setIsVideo(false);
+        });
+    }
+  }, [imageToDisplay, setPlaceholder]);
 
   useEffect(() => {
     const getData = async () => {
-      if (currency === "0x0000000000000000000000000000000000000000" || !currency) {
-        setSymbol(getSymbol(chainId))
-        return
+      if (
+        currency === "0x0000000000000000000000000000000000000000" ||
+        !currency
+      ) {
+        setSymbol(getSymbol(chainId));
+        return;
       }
       const res = await getTokenSymbol(currency);
       setSymbol(res);
-    }
-    getData()
+    };
+    getData();
   }, [chainId, currency]);
 
   const handleAbort = () => {
-    setIsSuccess(false)
-    setIsFinished(false)
-    getLists()
-  }
+    setIsSuccess(false);
+    setIsFinished(false);
+    getLists();
+  };
   const handleFinishAuction = async () => {
-    // return setIsFinished(true)
     setIsLoading(true);
-    
+
     try {
       const gasLimit = 1000000;
-      const Bidify = new ethers.Contract(BIDIFY.address[chainId], BIDIFY.abi, library.getSigner())
-      const tx = chainId === 137 ? await Bidify.finish(id.toString(), { gasLimit }) : await Bidify.finish(id.toString())
-      const ret = await tx.wait()
-      setTransaction(ret)
-      // await new new Web3(window.ethereum).eth.Contract(
-      //   BIDIFY.abi,
-      //   BIDIFY.address[chainId]
-      // ).methods
-      //   .finish(id.toString())
-      //   .send({ from: account });
-      let updateData = await getDetailFromId(id, chainId, account, imageUrl, metadataUrl, name, token, platform, isERC721, library);
+      const Bidify = new ethers.Contract(
+        BIDIFY.address[chainId],
+        BIDIFY.abi,
+        library.getSigner()
+      );
+      const tx =
+        chainId === NetworkId.MATIC
+          ? await Bidify.finish(id.toString(), { gasLimit })
+          : await Bidify.finish(id.toString());
+      const ret = await tx.wait();
+      setTransaction(ret);
+      let updateData = await getDetailFromId(
+        id,
+        chainId,
+        account,
+        imageUrl,
+        metadataUrl,
+        name,
+        token,
+        platform,
+        isERC721,
+        library
+      );
       while (!updateData.paidOut) {
-        updateData = await getDetailFromId(id, chainId, account, imageUrl, metadataUrl, name, token, platform, isERC721, library)
+        updateData = await getDetailFromId(
+          id,
+          chainId,
+          account,
+          imageUrl,
+          metadataUrl,
+          name,
+          token,
+          platform,
+          isERC721,
+          library
+        );
       }
-      await axios.put(`${baseUrl}/auctions/${id}`, updateData)
+      await axios.put(`${baseUrl}/auctions/${id}`, updateData);
       setIsLoading(false);
       setIsFinished(true);
     } catch (error) {
@@ -138,7 +183,7 @@ const Card = (props) => {
       }, 3000);
     } finally {
       const balance = await getBalance(account, chainId);
-      console.log(balance)
+      console.log(balance);
       userDispatch({
         type: "SET_BALANCE",
         payload: { balance },
@@ -147,28 +192,54 @@ const Card = (props) => {
   };
 
   const handleBidMethod = async (amount) => {
-    // return console.log(id, "0x0000000000000000000000000000000000000000", atomic(amount, 18).toString())
     setIsModal(false);
     setIsLoading(true);
     setProcessContent(
       "Please allow https://Bidify.org permission within your wallet when prompted there will be a small fee for this"
     );
     try {
-      await signBid(id, amount, chainId, account, library)
+      await signBid(id, amount, chainId, account, library);
       setProcessContent(
         "Confirm the transaction of your bid amount, there will be a small network fee for this."
       );
       await bid(id, amount, chainId, account, library, setTransaction);
-      while (account !== (await getDetailFromId(id, chainId, account, imageUrl, metadataUrl, name, token, platform, isERC721, library)).highBidder) {
-        console.log("in while loop")
+      while (
+        account !==
+        (
+          await getDetailFromId(
+            id,
+            chainId,
+            account,
+            imageUrl,
+            metadataUrl,
+            name,
+            token,
+            platform,
+            isERC721,
+            library
+          )
+        ).highBidder
+      ) {
+        console.log("in while loop");
       }
-      // console.log("out of loop")
-      const updateData = await getDetailFromId(id, chainId, account, imageUrl, metadataUrl, name, token, platform, isERC721, library);
-      setLatestDetail(updateData)
-      await axios.put(`${baseUrl}/auctions/${id}`, updateData)
+      const updateData = await getDetailFromId(
+        id,
+        chainId,
+        account,
+        imageUrl,
+        metadataUrl,
+        name,
+        token,
+        platform,
+        isERC721,
+        library
+      );
+      setLatestDetail(updateData);
+      await axios.put(`${baseUrl}/auctions/${id}`, updateData);
       setIsLoading(false);
-      
-      if (amount >= endingPrice && Number(endingPrice) !== 0) setIsFinished(true)
+
+      if (amount >= endingPrice && Number(endingPrice) !== 0)
+        setIsFinished(true);
       else setIsSuccess(true);
     } catch (error) {
       console.log(error);
@@ -205,26 +276,18 @@ const Card = (props) => {
         <>
           <div className="card_content_details">
             <div className="block_left">
-              {
-                currentBid ?
-                  <Text variant="primary" style={{ color: "#F79420" }}>
-                    Sold out for {currentBid} {symbol}
-                  </Text> :
-                  <Text style={{ fontSize: 12 }}>Not sold out</Text>
-              }
+              {currentBid ? (
+                <Text variant="primary" style={{ color: "#F79420" }}>
+                  Sold out for {currentBid} {symbol}
+                </Text>
+              ) : (
+                <Text style={{ fontSize: 12 }}>Not sold out</Text>
+              )}
             </div>
           </div>
-          {/* {isUser ? ( */}
-          <Button
-            variant="secondary"
-            // style={{ pointerEvents: !isUser && "none" }}
-            onClick={() => handleFinishAuction()}
-          >
+          <Button variant="secondary" onClick={() => handleFinishAuction()}>
             Finish auction
           </Button>
-          {/* ) : ( */}
-          {/* <p></p> */}
-          {/* )} */}
         </>
       );
     } else {
@@ -234,7 +297,10 @@ const Card = (props) => {
           <div className="card_content_details">
             <div className="block_left">
               <Text variant="primary" style={{ color: "#F79420" }}>
-                {(currentBid !== nextBid && currentBid !== null) ? currentBid : '0'} {symbol}
+                {currentBid !== nextBid && currentBid !== null
+                  ? currentBid
+                  : "0"}{" "}
+                {symbol}
               </Text>
               <Text style={{ fontSize: 12 }}>Current Bid</Text>
             </div>
@@ -252,8 +318,10 @@ const Card = (props) => {
           >
             {isUser ? (
               <img src={lock} alt="lock" width={14} />
+            ) : !isHighBidder ? (
+              "Place Your Bid"
             ) : (
-              !isHighBidder ? "Place Your Bid" : "You are the highest bidder"
+              "You are the highest bidder"
             )}
           </Button>
         </>
@@ -280,16 +348,24 @@ const Card = (props) => {
         </video>
       ) : (
         <>
-          {loadingImage && <img className="placeholder" src={placeholder} alt="" />}
+          {loadingImage && (
+            <img className="placeholder" src={placeholder} alt="" />
+          )}
           <LazyLoadImage
             effect="blur"
-            src={isValidUrl(imageUrl) ? `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${imageUrl}` : imageUrl}
-            alt="art"
-            placeholder={
-              <div></div>
+            src={
+              isValidUrl(imageUrl)
+                ? `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${imageUrl}`
+                : imageUrl
             }
-            onError={(e) => {setPlaceholder(NoImage)}}
-            afterLoad={() => {setLoadingImage(false)}}
+            alt="art"
+            placeholder={<div></div>}
+            onError={(e) => {
+              setPlaceholder(NoImage);
+            }}
+            afterLoad={() => {
+              setLoadingImage(false);
+            }}
           />
         </>
       )}

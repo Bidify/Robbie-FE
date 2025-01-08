@@ -34,30 +34,18 @@ const platforms = [
     name: "Gauntlets",
     address: "0x74EcB5F64363bd663abd3eF08dF75dD22d853BFC",
   },
-  // {
-  //   name:"Decentraland",
-  //   address:"0x959e104e1a4db6317fa58f8295f586e1a978c297"
-  // },
-  // {
-  //   name:"pymons ",
-  //   address:"0x8620121c74DA24B7718849D3E6a57FaD9C2b098c"
-  // },
 ];
 
 const HomeScreen = () => {
   const [currentState, setCurrentState] = useState("live");
-  // const [currentPlatform, setCurrentPlatform] = useState("");
   const [nftData, setNftData] = useState([]);
   const [loading, setloading] = useState(false);
-  // const [initialLoad, setInitialLoad] = useState(0);
   const initialLoad = 0;
-  // const [totalData, setTotalData] = useState(9);
   const totalData = 9;
 
   const handleFilter = async (platform, name) => {
     console.log(platform);
     setloading(true);
-    // setCurrentPlatform(platform);
     setCurrentState(name);
     let result = [];
     var total = totalData === 9 ? totalData : totalData + 1;

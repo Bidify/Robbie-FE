@@ -20,27 +20,33 @@ import Prompt from "./prompt";
 
 import playImg from "../assets/icons/play-circle.svg";
 import pauseImg from "../assets/icons/pause-circle.svg";
-import NFTPortImage from "../assets/placeholders/nftport.gif"
-import FleekImage from "../assets/placeholders/fleek.gif"
-import IpfsImage from "../assets/placeholders/ipfs.gif"
-import NoImage from "../assets/placeholders/nft-placeholder.svg"
+import NFTPortImage from "../assets/placeholders/nftport.gif";
+import FleekImage from "../assets/placeholders/fleek.gif";
+import IpfsImage from "../assets/placeholders/ipfs.gif";
+import NoImage from "../assets/placeholders/nft-placeholder.svg";
 
 //IMPORTING UTILITY PACKGAES
 
 import { getSymbol, URLS } from "../utils/config";
-import { isValidUrl, list, signList, getDetails } from "../utils/Bidify";
+import { isValidUrl, list, signList, getDetails, isCID } from "../utils/Bidify";
 import { useWeb3React } from "@web3-react/core";
 import { useHistory } from "react-router-dom";
-// import { getBase64ImageBuffer } from "../utils/NFTFetcher";
 import { UserContext } from "../store/contexts";
-
 const CollectionCard = (props) => {
-  const { name, description, image, platform, amount, token, isERC721, token_uri, flipRefresh } = props;
+  const {
+    name,
+    description,
+    image,
+    platform,
+    amount,
+    token,
+    isERC721,
+    token_uri,
+    flipRefresh,
+  } = props;
   const { userDispatch } = useContext(UserContext);
   const { chainId, account, library } = useWeb3React();
   const videoRef = useRef(null);
-
-  // const account = '0x0B172a4E265AcF4c2E0aB238F63A44bf29bBd158'
 
   const [processContent, setProcessContent] = useState("");
   const [transaction, setTransaction] = useState();
@@ -51,33 +57,35 @@ const CollectionCard = (props) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isPlay, setIsPlay] = useState(false);
-  const [symbol, setSymbol] = useState("")
-  const [loadingImage, setLoadingImage] = useState(true)
-  const [placeholder, setPlaceholder] = useState("")
-  const history = useHistory()
+  const [symbol, setSymbol] = useState("");
+  const [loadingImage, setLoadingImage] = useState(true);
+  const [placeholder, setPlaceholder] = useState("");
+  const history = useHistory();
   // const { userDispatch } = useContext(UserContext);
   useEffect(() => {
-    
     const setImage = async () => {
       if (image) {
-        if (image.includes('storage.googleapis.com')) {
-          setPlaceholder(NFTPortImage)
-        } else if (image.includes('fleek.co')) {
-          setPlaceholder(FleekImage)
+        if (image.includes("storage.googleapis.com")) {
+          setPlaceholder(NFTPortImage);
+        } else if (image.includes("arweave.net")) {
+          setPlaceholder(FleekImage);
         } else {
-          setPlaceholder(IpfsImage)
+          setPlaceholder(IpfsImage);
         }
         const arr = image.split("url=");
         let displayImg = "";
         if (arr.length > 1) {
-          SetImageUrl(decodeURIComponent(arr[1]))
           displayImg = decodeURIComponent(arr[1]);
         } else {
-          SetImageUrl(image);
           displayImg = image;
         }
+        if (isCID(displayImg))
+          displayImg = `https://ipfs.io/ipfs/${displayImg}`;
+        SetImageUrl(displayImg);
         try {
-          const response = await fetch(displayImg);
+          const response = await fetch(
+            `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${displayImg}`
+          ).catch(console.error);
           const contentType = response.headers.get("content-type");
           if (contentType.includes("video")) {
             setIsVideo(true);
@@ -86,28 +94,27 @@ const CollectionCard = (props) => {
           setIsVideo(false);
         }
       }
-    }
+    };
     setImage();
-  }, [image, setPlaceholder])
+  }, [image, setPlaceholder]);
   const initialValues = {
     price: "0",
     endingPrice: "0",
     days: "",
     platform,
     token,
-    // currency: "0xc778417E063141139Fce010982780140Aa0cD5Ab"
     currency: null,
   };
 
   useEffect(() => {
     if (account) {
-      setSymbol(getSymbol(chainId))
+      setSymbol(getSymbol(chainId));
     }
-  }, [account, chainId])
+  }, [account, chainId]);
   const validationSchema = Yup.object({
     price: Yup.number()
       .typeError("price must be a number")
-      .min(0.000001, "price must be greater than 0")
+      .min(0.0001, "price must be greater than 0.0001")
       .required("This field is required"),
     endingPrice: Yup.number()
       .typeError("price must be a number")
@@ -115,14 +122,13 @@ const CollectionCard = (props) => {
     days: Yup.number()
       .typeError("days must be a number")
       .min(1, "days must be greater than one day")
-      .max(10, "days should be less than 10 days")
+      .max(30, "days should be less than 30 days")
       .required("This field is required"),
   });
   const onSubmit = async (values, onSubmitProps) => {
     setIsModal(false);
     setIsLoading(true);
     const { currency, platform, token, price, endingPrice, days } = values;
-    // return console.log(atomic(price.toString(), 18).toString(), atomic(endingPrice.toString(), 18).toString(),)
     setProcessContent(
       "Please allow https://bidify.org permission within your wallet when prompted, there will be a small fee for this…"
     );
@@ -132,19 +138,29 @@ const CollectionCard = (props) => {
       setProcessContent(
         "Confirm the second transaction to allow your NFT to be listed, there will be another small network fee."
       );
-      await list({ currency, platform, token, price, endingPrice, days, image: imageUrl, name, metadataUrl: token_uri, description, chainId, account, library, isERC721, setTransaction });
-      // const response = await axios.get(`${baseUrl}/collection`, { params: { chainId, owner: account } })
-      // const results = response.data
-      // userDispatch({
-      //   type: "MY_COLLECTIONS",
-      //   payload: { results, isCollectionFetched: true },
-      // });
+      await list({
+        currency,
+        platform,
+        token,
+        price,
+        endingPrice,
+        days,
+        image: imageUrl,
+        name,
+        metadataUrl: token_uri,
+        description,
+        chainId,
+        account,
+        library,
+        isERC721,
+        setTransaction,
+      });
       setIsLoading(false);
       setIsSuccess(true);
       setTimeout(() => {
-        flipRefresh()
+        flipRefresh();
         setIsSuccess(false);
-      }, 3000);
+      }, 5000);
     } catch (error) {
       console.log(error);
       setIsLoading(false);
@@ -163,12 +179,11 @@ const CollectionCard = (props) => {
     const web3 = new Web3(new Web3.providers.HttpProvider(URLS[chainId]));
     let _balance = await web3.eth.getBalance(account); //Will give value in.
     _balance = web3.utils.fromWei(_balance);
-    // setBalance(_balance)
     userDispatch({
-        type: "SET_BALANCE",
-        payload: { balance: _balance },
-      });
-  }
+      type: "SET_BALANCE",
+      payload: { balance: _balance },
+    });
+  };
 
   const renderCreateForm = (
     <Formik
@@ -226,7 +241,10 @@ const CollectionCard = (props) => {
   };
 
   const renderImage = (
-    <div className="card_image cursor" onClick={() => history.push(`/nft_details/${platform}/${token}`)}>
+    <div
+      className="card_image cursor"
+      onClick={() => history.push(`/nft_details/${platform}/${token}`)}
+    >
       {isVideo ? (
         <>
           <video ref={videoRef} loop>
@@ -251,10 +269,16 @@ const CollectionCard = (props) => {
         </>
       ) : (
         <>
-          {loadingImage && <img className='placeholder' src={placeholder} alt="" />}
+          {loadingImage && (
+            <img className="placeholder" src={placeholder} alt="" />
+          )}
           <LazyLoadImage
             effect="blur"
-            src={isValidUrl(imageUrl) ? `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${imageUrl}` : imageUrl}
+            src={
+              isValidUrl(imageUrl)
+                ? `https://img-cdn.magiceden.dev/rs:fill:390:0:0:0/plain/${imageUrl}`
+                : imageUrl
+            }
             alt="art"
             placeholder={<img src={NFTPortImage} alt="" />}
             onError={() => setPlaceholder(NoImage)}
@@ -269,7 +293,10 @@ const CollectionCard = (props) => {
 
   const renderContent = (
     <div className="card_content cursor">
-      <div className="overlay" onClick={() => history.push(`/nft_details/${platform}/${token}`)}></div>
+      <div
+        className="overlay"
+        onClick={() => history.push(`/nft_details/${platform}/${token}`)}
+      ></div>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <Text variant="primary" className="title">
           {name}
@@ -297,9 +324,9 @@ const CollectionCard = (props) => {
   );
 
   const handleAbort = () => {
-    setIsSuccess(false)
-    getDetails()
-  }
+    setIsSuccess(false);
+    getDetails();
+  };
 
   return (
     <>

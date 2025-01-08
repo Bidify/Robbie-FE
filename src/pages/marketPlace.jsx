@@ -34,7 +34,6 @@ const MarketPlace = () => {
   const [isBidsDropdown, setIsBidsDropdown] = useState(false);
   const [range, setRange] = useState(0);
   const { active } = useWeb3React();
-  // const options = {method: 'GET'};
 
   useEffect(() => {
     if (userState?.liveAuctions) {
@@ -176,7 +175,9 @@ const MarketPlace = () => {
 
   const renderCards = (
     <>
-      { !active ? <NoArtifacts title="Bidify is not connected to Ethereum." /> : data?.length > 0 ? (
+      {!active ? (
+        <NoArtifacts title="Bidify is not connected to Ethereum." />
+      ) : data?.length > 0 ? (
         <div className="live_auction_card_wrapper">
           {data?.map((lists, index) => {
             return <Card {...lists} key={index} />;

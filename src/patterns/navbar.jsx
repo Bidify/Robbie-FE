@@ -20,12 +20,15 @@ import { getSymbol, NetworkData } from "../utils/config";
 
 const Navbar = () => {
   //INITIALIZING HOOKS
-  const { chainId, account } = useWeb3React()
+  const { chainId, account } = useWeb3React();
   const { userDispatch } = useContext(UserContext);
-
   const renderLogo = (
     <div className="logo">
-      <img src={NetworkData[(account ? chainId : 5)].logo} alt="logo" width={48} />
+      <img
+        src={NetworkData[account ? chainId : 763373].logo}
+        alt="logo"
+        width={48}
+      />
       <Text variant="primary">{getSymbol(chainId)}</Text>
     </div>
   );
